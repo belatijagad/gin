@@ -11,7 +11,14 @@ pub struct ParamOptions {
     pub id: String,
 }
 
-// #[derive(Deserialize, Debug)]
-// pub struct CreateWalletSchema {
-//     pub 
-// }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreateWalletSchema {
+    pub wallet_name: String,
+    pub balance: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UpdatedWalletSchema {
+    pub wallet_name: Option<String>,
+    pub balance: Option<i64>,
+}
