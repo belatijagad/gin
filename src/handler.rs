@@ -76,3 +76,29 @@ async fn create_wallet_handler(
         }
     }
 }
+
+#[get("/wallets/{id}")]
+async fn get_wallet_handler(
+    path: web::Path<uuid::Uuid>,
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let wallet_id = path.into_inner();
+    let query_result = sqlx::query_as!(WalletModel, "SELECT * FROM wallets WHERE id = $1", wallet_id)
+        .fetch_one(&data.db)
+        .await;
+
+    match query_result {
+        Ok(wallet) => {
+            let wallet_response = serde_json::json!({"status": "success", "data": serde_json::json!({
+                "wallet": wallet,
+            })});
+
+            return HttpResponse::Ok().json(wallet_response);
+        }
+        Err(_) => {
+            let message = format!("Note with ID: {} not found", wallet_id);
+            return HttpResponse::NotFound()
+                .json(serde_json::json!({"status": "fail", "message": message}));
+        }
+    }
+}
