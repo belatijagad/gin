@@ -48,9 +48,8 @@ async fn create_wallet_handler(
     let query_result = sqlx::query_as!(
         WalletModel,
         "INSERT INTO wallets (wallet_name, balance) VALUES ($1, $2) RETURNING *",
-        body.title.to_string(),
-        body.content.to_string(),
-        body.category.to_owned().unwrap_or("".to_string()),
+        body.wallet_name.to_string(),
+        body.balance,
     )
     .fetch_one(&data.db)
     .await;
