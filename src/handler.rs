@@ -39,3 +39,40 @@ pub async fn wallet_list_handler(
     });
     HttpResponse::Ok().json(json_response)
 }
+
+#[post("/wallets")]
+async fn create_wallet_handler(
+    body: web::Json<CreateWalletSchema>,
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let query_result = sqlx::query_as!(
+        WalletModel,
+        "INSERT INTO wallets (wallet_name, balance) VALUES ($1, $2) RETURNING *",
+        body.title.to_string(),
+        body.content.to_string(),
+        body.category.to_owned().unwrap_or("".to_string()),
+    )
+    .fetch_one(&data.db)
+    .await;
+
+    match query_result {
+        Ok(wallet) => {
+            let wallet_response = serde_json::json!({"status": "success", "data": serde_json::json!({
+                "wallet": wallet,
+            })});
+
+            return HttpResponse::Ok().json(wallet_response);
+        }
+        Err (e) => {
+            if e.to_string()
+                .contains("duplicate key value violates unique constraint")
+            {
+                return HttpResponse::BadRequest()
+                    .json(serde_json::json!({"status": "fail", "message": "Wallet with that name already exist"}));
+            }
+
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "error", "message": format!("{:?}", e)}));
+        }
+    }
+}
